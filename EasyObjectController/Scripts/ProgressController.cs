@@ -7,6 +7,14 @@ using UnityEngine.Events;
 public class ProgressController : MonoBehaviour
 {
 
+    [Serializable]
+    private class EventTiming
+    {
+        public float targetProgress;
+        public UnityEvent onTargetEvent;
+        public bool isEventEnd = false;
+    }
+    
     [SerializeField,Range(0f,1f)]
     protected float progress = 0f;
 
@@ -18,6 +26,9 @@ public class ProgressController : MonoBehaviour
     
     public bool isPlaying = false;
 
+    [SerializeField]
+    private List<EventTiming> eventTimings = new List<EventTiming>();
+    
     public UnityEvent onPlayBegun = new UnityEvent();
 
     public UnityEvent onPlayEnded = new UnityEvent();
@@ -32,6 +43,7 @@ public class ProgressController : MonoBehaviour
     public void Init()
     {
         progress = 0f;
+        foreach (var target in eventTimings) target.isEventEnd = false;
         UpdateProgress();
     }
     
@@ -94,6 +106,16 @@ public class ProgressController : MonoBehaviour
         progress = p;
         if (progress > 1f) progress = 1f;
         if (progress < 0f) progress = 0f;
+        
+        for (int i = 0;i<eventTimings.Count;i++)
+        {
+            if (!eventTimings[i].isEventEnd && progress >= eventTimings[i].targetProgress)
+            {
+                eventTimings[i].isEventEnd = true;
+                eventTimings[i]?.onTargetEvent.Invoke();
+            }
+        }
+        
         UpdateProgress();
     }
 
